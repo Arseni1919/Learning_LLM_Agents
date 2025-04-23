@@ -7,7 +7,26 @@ _Agent_ - is an AI model capable of reasoning, planning, and interacting with it
 
 _Agency_ - the ability to interact with the environment.
 
-_Brain_ - this is all the thinking happens
+_Brain (AI Model)_ - this is where all the thinking happens. The AI model handles reasoning and planning. Decides on actions to take. 
+
+_Body (Capabilities and Tools)_ - this is everything the agent is equipped to do.
+
+Agency levels:
+
+<img src="pics/a_levels.png" width="700">
+
+The most common AI model found in agents is an LLM, which takes Text as an input and outputs Text as well.
+
+## What are LLMs?
+
+
+## What are Tools?
+
+
+
+
+
+
 
 
 
