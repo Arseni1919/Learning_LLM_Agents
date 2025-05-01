@@ -201,10 +201,209 @@ Tedious, yea? Let's learn smolagents and see how this (and other) framework help
 
 ## Create an Agent with `smolagents`
 
+`smolagents` is a library that focuses on _codeAgent_, a kind of agent that performs "Actions" through code blocks, and then "Observes" results by executing the code.
+
+- [Create an Agent with `smolagents`](https://huggingface.co/learn/agents-course/en/unit1/tutorial)
+- [My first agent in 🤗Spaces](https://huggingface.co/spaces/ArseniyPerchik/First_agent_template)
+
+
+## SMOLAGENTS FRAMEWORK
+
+When to use:
+- lightweight minimal solution
+- experiment quickly
+- application logic is straightforward
+
+Code vs. JSON actions: unlike other frameworks that use JSON actions, `smolagents` focuses on tool calls in code. No need to parse the JSON to build code that calls tools: the output can be executed directly.
+
+<img src="pics/code_agent.png" width="700">
+
+Code agents are the default type in `smolagents`.
+
+Why code agent and not JSON agent:
+- composability: easily combine are reuse actions
+- object management: work directly with complex structures like images
+- generality: express any computationally possible task
+- natural for LLMs: high-quality code is already present in LLM training data
+ 
+How code agents work:
+
+<img src="pics/code_agent_2.png" width="700">
+
+> The code did not run in my case. Unfortunately, no API-free code is available to run the agents. I need to buy a PRO subscription.
+> Ok, now I have a pro subscription. Let's continue.
+
+The simplest code to run:
+
+```python
+from smolagents import CodeAgent, DuckDuckGoSearchTool, HfApiModel
+agent = CodeAgent(tools=[DuckDuckGoSearchTool()], model=HfApiModel())
+agent.run("Search for the best music recommendations for a party at the Wayne's mansion.")
+```
+
+A simple tool use:
+
+```python
+from smolagents import CodeAgent, tool, HfApiModel
+
+# Tool to suggest a menu based on the occasion
+@tool
+def suggest_menu(occasion: str) -> str:
+    """
+    Suggests a menu based on the occasion.
+    Args:
+        occasion (str): The type of occasion for the party. Allowed values are:
+                        - "casual": Menu for casual party.
+                        - "formal": Menu for formal party.
+                        - "superhero": Menu for superhero party.
+                        - "custom": Custom menu.
+    """
+    if occasion == "casual":
+        return "Pizza, snacks, and drinks."
+    elif occasion == "formal":
+        return "3-course dinner with wine and dessert."
+    elif occasion == "superhero":
+        return "Buffet with high-energy and healthy food."
+    else:
+        return "Custom menu for the butler."
+
+# Alfred, the butler, preparing the menu for the party
+agent = CodeAgent(tools=[suggest_menu], model=HfApiModel())
+
+# Preparing the menu for the party
+agent.run("Prepare a formal menu for the party.")
+```
+
+You can use even some default python modules:
+
+```python
+from smolagents import CodeAgent, HfApiModel
+import numpy as np
+import time
+import datetime
+
+agent = CodeAgent(tools=[], model=HfApiModel(), additional_authorized_imports=['datetime'])
+
+agent.run(
+    """
+    Alfred needs to prepare for the party. Here are the tasks:
+    1. Prepare the drinks - 30 minutes
+    2. Decorate the mansion - 60 minutes
+    3. Set up the menu - 45 minutes
+    4. Prepare the music and playlist - 45 minutes
+
+    If we start right now, at what time will the party be ready?
+    """
+)
+```
+
+To push the agent:
+
+```python
+# Change to your username and repo name
+agent.push_to_hub('sergiopaniego/AlfredAgent')
+```
+
+To load the agent:
+```python
+# Change to your username and repo name
+alfred_agent = agent.from_hub('sergiopaniego/AlfredAgent', trust_remote_code=True)
+alfred_agent.run("Give me the best playlist for a party at Wayne's mansion. The party idea is a 'villain masquerade' theme")  
+```
+
+Example of ToolCallingAgent that uses JSON calls instead of generating code:
+
+```python
+from smolagents import ToolCallingAgent, DuckDuckGoSearchTool, HfApiModel
+agent = ToolCallingAgent(tools=[DuckDuckGoSearchTool()], model=HfApiModel())
+agent.run("Search for the best music recommendations for a party at the Wayne's mansion.")
+```
+
+Creation of a tool by a `Tool` class:
+
+```python
+from smolagents import Tool, CodeAgent, HfApiModel
+
+class SuperheroPartyThemeTool(Tool):
+    name = "superhero_party_theme_generator"
+    description = """
+    This tool suggests creative superhero-themed party ideas based on a category.
+    It returns a unique party theme idea."""
+
+    inputs = {
+        "category": {
+            "type": "string",
+            "description": "The type of superhero party (e.g., 'classic heroes', 'villain masquerade', 'futuristic Gotham').",
+        }
+    }
+
+    output_type = "string"
+
+    def forward(self, category: str):
+        themes = {
+            "classic heroes": "Justice League Gala: Guests come dressed as their favorite DC heroes with themed cocktails like 'The Kryptonite Punch'.",
+            "villain masquerade": "Gotham Rogues' Ball: A mysterious masquerade where guests dress as classic Batman villains.",
+            "futuristic Gotham": "Neo-Gotham Night: A cyberpunk-style party inspired by Batman Beyond, with neon decorations and futuristic gadgets."
+        }
+
+        return themes.get(category.lower(), "Themed party idea not found. Try 'classic heroes', 'villain masquerade', or 'futuristic Gotham'.")
+
+# Instantiate the tool
+party_theme_tool = SuperheroPartyThemeTool()
+agent = CodeAgent(tools=[party_theme_tool], model=HfApiModel())
+
+# Run the agent to generate a party theme idea
+result = agent.run(
+    "What would be a good superhero party idea for a 'villain masquerade' theme?"
+)
+
+print(result)  # Output: "Gotham Rogues' Ball: A mysterious masquerade where guests dress as classic Batman villains."
+```
+
+There are also some [default tools](https://huggingface.co/docs/smolagents/reference/tools#default-tools).
+
+You can share and import tools.
+
+You can import tools from LangChain and MCP servers.
+
+### RAG - Retrival Augmented Generation
+
+**Retrival Augmented Generation (RAG)** systems combine the capabilities of data retrieval and generation models to provide context-aware responses. For example, the results of a web search are pasted into the context window, so that the model can process the results as well to build its next tokens.
+
+
+**Agentic RAG** extends traditional RAG systems by combining autonomous agents with dynamic knowledge retrival. It allows the agent to autonomously formulate search queries, critique retrieved results, and conduct multiple retrieval steps for a more tailored and comprehensive output.
+
+### Multi-Agent Systems
+
+Many agents can collaborate on complex tasks.
+
+An example:
+
+<img src="pics/mas.png" width="700">
+
+### Vision Agents
+
+It is possible to use images in the pipeline of `smolagents`.
+
+<img src="pics/smolagents_vision.png" width="700">
+
+## LLAMAINDEX FRAMEWORK
+
+## LANGGRAPH FRAMEWORK
+
+## USE CASE FOR AGENTIC RAG
+
+## FINAL PROJECT
+
+## BONUS 1
+
+## BONUS 2
+
+## BONUS 3
 
 
 
 
 ## Credits
 
-- [🤗 Agents Course](https://huggingface.co/learn/agents-course/unit0/introduction)
+- [🤗Agents Course](https://huggingface.co/learn/agents-course/unit0/introduction)
