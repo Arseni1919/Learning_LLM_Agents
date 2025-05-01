@@ -2,7 +2,7 @@
 
 <img src="pics/whiteboard-no-check.jpg" width="700">
 
-## What is an agent?
+## WHAT IS AN AGENT?
 
 _Agent_ - is an AI model capable of reasoning, planning, and interacting with its environment. More officially:
 > "An Agent is a system that leverages an AI model to interact with its environment in order to achieve a user-defined objective. It combines reasoning, planning, and the execution of actions (often via external tools) to fulfill tasks."
@@ -19,7 +19,7 @@ Agency levels:
 
 The most common AI model found in agents is an LLM, which takes Text as an input and outputs Text as well.
 
-## What are LLMs?
+## WHAT ARE LLMs?
 
 _LLMs_ are the most common type of _AI models_ for Agents.
 
@@ -30,7 +30,7 @@ The underline principle: **its objective is to predict the next token, given a s
 Each model has its own end-of-sequence (EOS) token.
 
 
-## Messages and Special Tokens
+## MESSAGES AND SPECIAL TOKENS
 
 - there are special message tokens that are added to the input
 - system message - is the first message the LLM sees, and it instructs it how to behave
@@ -50,7 +50,7 @@ rendered_prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_ge
 ```
 
 
-## What are Tools?
+## WHAT ARE TOOLS?
 
 A Tool is a function given to the LLM. This funciton should fulfill a clear objective.
 
@@ -72,7 +72,7 @@ MCP provides:
 
 Any framework implementing MPC can leverage tools defined within the protocol.
 
-## Agent workflow: Thought-Action-Observation Cycle
+## AGENT WORKFLOW: Thought-Action-Observation Cycle
 
 <img src="pics/agents_2.png" width="700">
 
@@ -84,7 +84,7 @@ In the action step, it executes the tools via structured prompts. Or generates c
 
 In the observation step, the agent processes the output of actions. An important idea here is that this process works in loops, so that the agent has a chance to reiterate if needed.
 
-## Create your first Agent
+## CREATE YOUR FIRST AGENT
 
 ```python
 import os
@@ -199,7 +199,7 @@ print(final_output)
 
 Tedious, yea? Let's learn smolagents and see how this (and other) framework helps us to save some time with technical code for agents.
 
-## Create an Agent with `smolagents`
+## CREATE AN AGENT WITH `smolagents`
 
 `smolagents` is a library that focuses on _codeAgent_, a kind of agent that performs "Actions" through code blocks, and then "Observes" results by executing the code.
 
@@ -388,6 +388,19 @@ It is possible to use images in the pipeline of `smolagents`.
 <img src="pics/smolagents_vision.png" width="700">
 
 ## LLAMAINDEX FRAMEWORK
+
+**LlamaIndex** - is a framework to create LLM-powered agents.
+The key parts of LlamaIndex are:
+- **Components**: Components are the basic building blocks you use in LlamaIndex. These include things like _prompts_, _models_, and _databases_. Components often help connect LlamaIndex with other tools and libraries.
+- **Tolls**: Tools are components that provide specific capabilities like searching, calculating, or accessing external services. They are the building blocks that enable agents to perform tasks.
+- **Agents**: Agents are autonomous components that can use tools and make decisions. They coordinate tool usage to achieve complex tasks.
+- **Workflows**: Are step-by-step processes that process logic together. Workflows or agentic workflows are a way to structure agents behavior without the explicit use of agents.
+
+The advantages of LlamaIndex:
+- Clear workflow system
+- Advanced Document parsing with LamaParse (paid feature)
+- Many ready-to-use components
+- LlamaHub
 
 ## LANGGRAPH FRAMEWORK
 

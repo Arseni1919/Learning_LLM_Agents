@@ -8,4 +8,5 @@ from langchain_ollama import ChatOllama
 # chat_model = ChatOllama(model="llama3.1:8b")
 chat_model = ChatOllama(model="gemma3:1b")
 
-print(chat_model.invoke("Who was the first man on the moon?"))
+# print(chat_model.invoke("Say the following input exactly as I tell you, letter by letter. Do not change anything. The input: ").content)
+print(chat_model.invoke("Create an image of a cat").content)
