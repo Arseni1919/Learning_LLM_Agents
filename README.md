@@ -370,6 +370,7 @@ You can import tools from LangChain and MCP servers.
 
 **Retrival Augmented Generation (RAG)** systems combine the capabilities of data retrieval and generation models to provide context-aware responses. For example, the results of a web search are pasted into the context window, so that the model can process the results as well to build its next tokens.
 
+> So, what is RAG? LLMs are trained on enormous bodies of data to learn general knowledge. However, they may not be trained on relevant and up-to-date data. RAG solves this problem by finding and retrieving relevant information from your data and giving that to the LLM.
 
 **Agentic RAG** extends traditional RAG systems by combining autonomous agents with dynamic knowledge retrival. It allows the agent to autonomously formulate search queries, critique retrieved results, and conduct multiple retrieval steps for a more tailored and comprehensive output.
 
@@ -401,6 +402,20 @@ The advantages of LlamaIndex:
 - Advanced Document parsing with LamaParse (paid feature)
 - Many ready-to-use components
 - LlamaHub
+
+### Working with RAG
+
+<img src="pics/rag_lamaindex.png" width="700">
+
+There are five key stages within RAG, which in turn will be a part of most larger applications you build.
+
+- **Loading**:
+- **Indexing**:
+- **Storing**:
+- **Querying**:
+- **Evaluation**: 
+
+
 
 ## LANGGRAPH FRAMEWORK
 
