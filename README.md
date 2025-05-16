@@ -576,6 +576,26 @@ This is useful with more complex workflows, we want to understand how each compo
 We have built the `QueryEngine`. 
 Now let's see how to use it _as a tool for an agent_.
 
+**Using Tools in LlamaIndex**
+
+We need to define each tool well so that LLM will understand how to use it.
+There are four main types of tools in `LlamaIndex`:
+
+<img src="pics/tools.png" width="700">
+
+- `FunctionTool`: convert any Python function into a tool that an agent can use. It automatically figures out how the function works. 
+- `QueryEngineTool`: a tool that lets agents use query engines. Since agents are built on query engines, they can also use other agents as tools.
+- `Toolspecs`: sets of tools created by the community, which often include tools for specific services like Gmail.
+- `Utility Tools`: special tools that help handle large amounts of data from other tools.
+
+**Creating a FunctionTool**
+
+**Creating a QueryEngineTool**
+
+**Creating Toolspecs**
+
+**Utility Tools**
+
 
 
 ## LANGGRAPH FRAMEWORK
