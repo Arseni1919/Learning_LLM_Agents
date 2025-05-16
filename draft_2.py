@@ -117,17 +117,17 @@
 # model = MLXModel(model_id="mistralai/Mistral-7B-Instruct-v0.3")
 
 
-from smolagents import DuckDuckGoSearchTool, ToolCallingAgent, FinalAnswerTool
-from smolagents import MLXModel
-from phoenix.otel import register
-from openinference.instrumentation.smolagents import SmolagentsInstrumentor
-
-register()
-SmolagentsInstrumentor().instrument()
-
-model = MLXModel(model_id="HuggingFaceTB/SmolLM-135M-Instruct", max_tokens=10000)
-agent = ToolCallingAgent(tools=[FinalAnswerTool(), DuckDuckGoSearchTool()], model=model)
-agent.run("Search for the best music recommendations for a party at the Wayne's mansion.")
+# from smolagents import DuckDuckGoSearchTool, ToolCallingAgent, FinalAnswerTool
+# from smolagents import MLXModel
+# from phoenix.otel import register
+# from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+#
+# register()
+# SmolagentsInstrumentor().instrument()
+#
+# model = MLXModel(model_id="HuggingFaceTB/SmolLM-135M-Instruct", max_tokens=10000)
+# agent = ToolCallingAgent(tools=[FinalAnswerTool(), DuckDuckGoSearchTool()], model=model)
+# agent.run("Search for the best music recommendations for a party at the Wayne's mansion.")
 
 # messages = [
 #     {
@@ -162,3 +162,37 @@ agent.run("Search for the best music recommendations for a party at the Wayne's 
 # agent = CodeAgent(tools=[DuckDuckGoSearchTool()], model=HfApiModel())
 #
 # agent.run("Search for the best music recommendations for a party at the Wayne's mansion.")
+
+
+from mlx_lm import load, generate
+
+model, tokenizer = load("mlx-community/Qwen2.5-Coder-32B-Instruct-4bit")
+
+prompt="hello"
+
+if hasattr(tokenizer, "apply_chat_template") and tokenizer.chat_template is not None:
+    messages = [{"role": "user", "content": prompt}]
+    prompt = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+
+response = generate(model, tokenizer, prompt=prompt, verbose=True)
+print(response)
+
+
+# from smolagents import CodeAgent, MLXModel
+#
+# model = MLXModel(
+#     "mlx-community/Qwen2.5-Coder-32B-Instruct-4bit",
+#     {
+#         "temperature": 0.7,
+#         "top_k": 20,
+#         "top_p": 0.8,
+#         "min_p": 0.05,
+#         "num_ctx": 32768,
+#     },
+# )
+# agent = CodeAgent(tools=[], model=model, add_base_tools=True)
+# agent.run(
+#     "Could you give me the 40th number in the Fibonacci sequence?",
+# )

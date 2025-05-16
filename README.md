@@ -409,11 +409,172 @@ The advantages of LlamaIndex:
 
 There are five key stages within RAG, which in turn will be a part of most larger applications you build.
 
-- **Loading**:
-- **Indexing**:
-- **Storing**:
-- **Querying**:
-- **Evaluation**: 
+- **Loading**: getting your data from where it lives into your workflow. There are integration tools in LlamaHub.
+- **Indexing**: creating a data structure that allows for querying the data. For LLMs, this nearly always means creating vector embeddings.
+- **Storing**: the way of storing the index.
+- **Querying**: querying the data - sub-queries, multi-step queries, hybrid strategies.
+- **Evaluation**: checking how effective it is relative to other strategies - how accurate, faithful, and fast you responses to queries are.
+
+And now in detail:
+
+**Loading and embedding docs**
+
+There are three main ways to load any data into LlamaIndex:
+- `SimpleDIrectoryReader` - a built-in loader for various file types from a local dir - _the simplest way_
+- `LlamaParse` - LlamaIndex's official tool for PDF parsing, available as a managed API
+- `LlamaHub` - a registry of hundreds of data-loading libraries to ingest data from any source
+
+```python
+from llama_index.core import SimpleDirectoryReader
+reader = SimpleDirectoryReader(input_dir="path/to/directory")
+documents = reader.load_data()
+```
+
+After loading the docs, we need to break them into smaller pieces called `Node` objects. 
+A `Node` is just a chuck of a text from the original dic that is easier for the AI to work with. 
+It still has a reference to the original doc. 
+
+
+`IngestionPipeline` helps to create these nodes through two key transformations:
+- `SentenceSplitter` - breaks down docs into manageable chunks by splitting them at natural sentence boundaries
+- `HuggingFaceEmbedding` - converts each chunk into numerical embeddings - vector representations that capture the semantic meaning in a way AI can process efficiently
+
+```python
+from llama_index.core import Document
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.core.ingestion import IngestionPipeline
+
+# create the pipeline with transformations
+pipeline = IngestionPipeline(
+    transformations=[
+        SentenceSplitter(chunk_overlap=0),
+        HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5"),
+    ]
+)
+nodes = await pipeline.arun(documents=[Document.example()])
+```
+
+
+**Storing and indexing docs**
+
+Now we need to store and index our nodes.
+
+We use the `Chroma` library for storing.
+
+```python
+import chromadb
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
+db = chromadb.PersistentClient(path="./alfred_chroma_db")
+chroma_collection = db.get_or_create_collection("alfred")
+vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+
+pipeline = IngestionPipeline(
+    transformations=[
+        SentenceSplitter(chunk_size=25, chunk_overlap=0),
+        HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5"),
+    ],
+    vector_store=vector_store,
+)
+```
+
+Then, we create an index:
+```python
+from llama_index.core import VectorStoreIndex
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+index = VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)
+# or directly from the docs:
+index = VectorStoreIndex.from_documents(docs, embed_model=embed_model)
+```
+
+
+
+
+
+**Querying a `VectorStoreIndex` with prompts and LLMs**
+
+Before we can query our index, we need to convert it to a query interface. 
+The most common conversion options are:
+- `as_retriever`: for basic doc retrieval, returning a list of `NodeWithSoce` objects with similarity scores
+- `as_query_engine`: for single question-answer interactions, returning a written response
+- `as_chat_engine`: for conversational interactions that maintain memory across multiple messages, returning a written response using chat history and indexed context
+
+```python
+from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI
+
+llm = HuggingFaceInferenceAPI(model_name="Qwen/Qwen2.5-Coder-32B-Instruct")
+query_engine = index.as_query_engine(
+    llm=llm,
+    response_mode="tree_summarize",
+)
+query_engine.query("What is the meaning of life?")
+# The meaning of life is 42
+```
+
+
+**Response processing**
+
+UNder the hood, the query engine uses a `ResponseSynthesizer` as a strategy to process the response. The are 3 main strategies out of the box:
+- `refine`: create and refine an answer by sequentially going through each retrieved text chunk. This makes a separate LLM call per Node/retrieved chunk.
+- `compact` (default): similar to refining but concatenating the chunks beforehand, resulting in fewer LLM calls.
+- `tree_summarize` (preferred): create a detailed answer by going through each retrieved text chunk and creating a tree structure of the answer.
+
+We can have more control:
+```python
+from llama_index.core import VectorStoreIndex, get_response_synthesizer
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.query_engine import RetrieverQueryEngine
+
+# build index
+index = VectorStoreIndex.from_documents(docs, embed_model=embed_model)
+
+# configure retriever
+retriever = VectorIndexRetriever(
+    index=index,
+    similarity_top_k=2,
+    embed_model=embed_model
+)
+
+# configure response synthesizer
+response_synthesizer = get_response_synthesizer(
+    response_mode="tree_summarize", llm=llm
+)
+
+# assemble query engine
+query_engine = RetrieverQueryEngine(
+    retriever=retriever,
+    response_synthesizer=response_synthesizer,
+)
+#%%
+# query
+response = query_engine.query("What is CGA stands for?")
+print(response)
+```
+
+**Evaluation and observability**
+
+LlamaIndex provides _built-in evaluation tools to assess response quality_.
+- `FaithfulnessEvaluator`: check if the answer is _supported by the context_.
+- `AnswerRelevancyEvaluator`: check if the answer is _relevant to the question_.
+- `CorrectnessEvaluator`: check if the answer is _correct_.
+
+```python
+from llama_index.core.evaluation import FaithfulnessEvaluator
+# query index
+evaluator = FaithfulnessEvaluator(llm=llm)
+eval_result = await evaluator.aevaluate_response(response=response)
+# print(eval_result)
+print(eval_result.passing)
+```
+
+But even without direct evaluation, we can _gain insights into how our system is performing through observability_. 
+This is useful with more complex workflows, we want to understand how each component is performing.
+
+We have built the `QueryEngine`. 
+Now let's see how to use it _as a tool for an agent_.
 
 
 
