@@ -590,11 +590,161 @@ There are four main types of tools in `LlamaIndex`:
 
 **Creating a FunctionTool**
 
+Very simple:
+
+```python
+from llama_index.core.tools import FunctionTool
+
+def get_weather(location: str) -> str:
+    """Useful for getting the weather for a given location."""
+    print(f"Getting weather for {location}")
+    return f"The weather in {location} is sunny"
+
+tool = FunctionTool.from_defaults(
+    get_weather,
+    name="my_weather_tool",
+    description="Useful for getting the weather for a given location.",
+)
+tool.call("New York")
+```
+
 **Creating a QueryEngineTool**
+
+```python
+query_engine_tool = QueryEngineTool.from_defaults(
+    query_engine,
+    name='search_in_docs',
+    description='Useful to search for information in the data folder.'
+)
+query_engine_tool.call("What is CGA stands for? Answer short.")
+```
 
 **Creating Toolspecs**
 
+
+Google toolspec:
+
+```python
+gmail_tool_spec = GmailToolSpec()
+gmail_tool_spec_list = gmail_tool_spec.to_tool_list()
+for t in gmail_tool_spec_list:
+    print(t.metadata.name)
+    print(t.metadata.description)
+    print('---')
+```
+
+MCP:
+
+```python
+from llama_index.tools.mcp import BasicMCPClient, McpToolSpec
+# We consider there is a mcp server running on 127.0.0.1:8000, or you can use the mcp client to connect to your own mcp server.
+mcp_client = BasicMCPClient("http://127.0.0.1:8000/sse")
+mcp_tool = McpToolSpec(client=mcp_client)
+# get the agent
+agent = await get_agent(mcp_tool)
+# create the agent context
+agent_context = Context(agent)
+```
+
 **Utility Tools**
+
+- `OnDemandToolLoader`: some cleaver index calling from the data
+- `LoadAndSearchToolSpec`: first load the relevant index, then choose from the uploaded index
+
+There are three main types of reasoning agents:
+
+<img src="pics/agents.png" width="700">
+
+Initializing:
+```python
+agent = AgentWorkflow.from_tools_or_functions(
+    [FunctionTool.from_defaults(multiply)],
+    llm=llm
+)
+```
+
+Agents are stateless by default.
+`Context` object can help to remember the previous interactions.
+
+```python
+# remembering state
+from llama_index.core.workflow import Context
+ctx = Context(agent)
+response = await agent.run("My name is Bob.", ctx=ctx)
+response = await agent.run("What was my name again?", ctx=ctx)
+```
+
+RAG agent:
+
+```python
+index = VectorStoreIndex.from_documents(docs, embed_model=embed_model)
+query_engine = index.as_query_engine(llm=llm, similarity_top_k=3) # as shown in the Components in LlamaIndex section
+
+query_engine_tool = QueryEngineTool.from_defaults(
+    query_engine=query_engine,
+    name="look in the docs",
+    description="The docs file that is important for the output.",
+    return_direct=False,
+)
+query_engine_agent = AgentWorkflow.from_tools_or_functions(
+    [query_engine_tool],
+    llm=llm,
+    system_prompt="You are a helpful assistant that has access to a database containing persona descriptions. "
+)
+ctx = Context(query_engine_agent)
+#%%
+response = await query_engine_agent.run('Use docs. What does CGA stand for?', ctx=ctx)
+print(response.response.content)
+```
+
+Multi-agent system:
+
+```python
+async def add(a: int, b: int) -> int:
+    """Adds two numbers."""
+    return a + b
+
+async def subtract(a: int, b: int) -> int:
+    """Subtract two numbers."""
+    return a - b
+
+calculator_agent = ReActAgent(
+    name="calculator",
+    description="Performs basic arithmetic operations",
+    system_prompt="You are a calculator assistant. Use your tools for any math operations.",
+    tools=[add, subtract],
+    llm=llm,
+)
+query_agent = ReActAgent(
+    name="docs_lookup",
+    description="Looks up information inside docs.",
+    system_prompt="Use your tool to query a RAG system to answer information from docs.",
+    tools=[query_engine_tool],
+    llm=llm,
+)
+agent = AgentWorkflow(
+    agents=[calculator_agent, query_agent], root_agent='calculator'
+)
+response = await agent.run(user_msg='Can you add 5 and 3?')
+print(response.response.content)
+```
+
+**Creating Agentic Workflows in LlamaIndex**
+
+A workflow in LlamaIndex provides a structured way to organize your code into sequential and manageable steps.
+
+Such a workflow is created by defining `Steps` which are triggered by `Events`, and themselves emit `Events` to trigger further steps.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
