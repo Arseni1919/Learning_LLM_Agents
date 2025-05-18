@@ -29,3 +29,5 @@ results
 test-trainer
 .gradio
 alfred_chroma_db
+lib
+flow.html

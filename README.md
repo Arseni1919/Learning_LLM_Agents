@@ -735,17 +735,167 @@ A workflow in LlamaIndex provides a structured way to organize your code into se
 
 Such a workflow is created by defining `Steps` which are triggered by `Events`, and themselves emit `Events` to trigger further steps.
 
+Benefits of workflows:
+- Clear organization of code into discrete steps
+- Event-driven architecture for flexible control flow
+- Type-safe communication between steps
+- Built-in state management
+- Support for both simple and complex agent interactions
+
+Creating:
+
+```python
+from llama_index.core.workflow import StartEvent, StopEvent, Workflow, step
+
+class MyWorkflow(Workflow):
+    @step
+    async def my_step(self, ev: StartEvent) -> StopEvent:
+        # do something here
+        return StopEvent(result="Hello, world!")
+    
+w = MyWorkflow(timeout=10, verbose=False)
+result = await w.run()
+```
+
+Connecting multiple steps:
+
+To connect multiple steps, we create events that carry data between steps. To do so, we need to add an `Event` that is passed between the steps and transfers the output of the first step to the second step.
+
+```python
+from llama_index.core.workflow import Event
+
+class ProcessingEvent(Event):
+    intermediate_result: str
+
+class MultiStepWorkflow(Workflow):
+    @step
+    async def step_one(self, ev: StartEvent) -> ProcessingEvent:
+        # Process initial data
+        return ProcessingEvent(intermediate_result="Step 1 complete")
+
+    @step
+    async def step_two(self, ev: ProcessingEvent) -> StopEvent:
+        # Use the intermediate result
+        final_result = f"Finished processing: {ev.intermediate_result}"
+        return StopEvent(result=final_result)
+
+w = MultiStepWorkflow(timeout=10, verbose=False)
+result = await w.run()
+result
+```
+
+The type hinting is crucial here!
+
+Loops and branches:
+
+The type hinting is the most powerful part of workflows, because it allows us to create branches, loops, and joins to facilitate more complex workflows.
+
+```python
+from llama_index.core.workflow import Event
+import random
 
 
+class ProcessingEvent(Event):
+    intermediate_result: str
 
 
+class LoopEvent(Event):
+    loop_output: str
 
 
+class MultiStepWorkflow(Workflow):
+    @step
+    async def step_one(self, ev: StartEvent | LoopEvent) -> ProcessingEvent | LoopEvent:
+        if random.randint(0, 1) == 0:
+            print("Bad thing happened")
+            return LoopEvent(loop_output="Back to step one.")
+        else:
+            print("Good thing happened")
+            return ProcessingEvent(intermediate_result="First step complete.")
+
+    @step
+    async def step_two(self, ev: ProcessingEvent) -> StopEvent:
+        # Use the intermediate result
+        final_result = f"Finished processing: {ev.intermediate_result}"
+        return StopEvent(result=final_result)
 
 
+w = MultiStepWorkflow(verbose=False)
+result = await w.run()
+result
+```
+
+Drawing workflows:
+
+```python
+from llama_index.utils.workflow import draw_all_possible_flows
+
+w = ... # as defined in the previous section
+draw_all_possible_flows(w, "flow.html")
+```
+
+State management:
+
+```python
+from llama_index.core.workflow import Context, StartEvent, StopEvent
 
 
+@step
+async def query(self, ctx: Context, ev: StartEvent) -> StopEvent:
+    # store query in the context
+    await ctx.set("query", "What is the capital of France?")
 
+    # do something with context and event
+    val = ...
+
+    # retrieve query from the context
+    query = await ctx.get("query")
+
+    return StopEvent(result=val)
+```
+
+You can create workflows also with the `AgentWorkflow` class. This is useful for the multi-agent workflow.
+
+
+```python
+from llama_index.core.workflow import Context
+
+# Define some tools
+async def add(ctx: Context, a: int, b: int) -> int:
+    """Add two numbers."""
+    # update our count
+    cur_state = await ctx.get("state")
+    cur_state["num_fn_calls"] += 1
+    await ctx.set("state", cur_state)
+
+    return a + b
+
+async def multiply(ctx: Context, a: int, b: int) -> int:
+    """Multiply two numbers."""
+    # update our count
+    cur_state = await ctx.get("state")
+    cur_state["num_fn_calls"] += 1
+    await ctx.set("state", cur_state)
+
+    return a * b
+
+...
+
+workflow = AgentWorkflow(
+    agents=[multiply_agent, addition_agent],
+    root_agent="multiply_agent"
+    initial_state={"num_fn_calls": 0},
+    state_prompt="Current state: {state}. User message: {msg}",
+)
+
+# run the workflow with context
+ctx = Context(workflow)
+response = await workflow.run(user_msg="Can you add 5 and 3?", ctx=ctx)
+
+# pull out and inspect the state
+state = await ctx.get("state")
+print(state["num_fn_calls"])
+```
 
 
 ## LANGGRAPH FRAMEWORK
