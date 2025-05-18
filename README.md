@@ -900,6 +900,45 @@ print(state["num_fn_calls"])
 
 ## LANGGRAPH FRAMEWORK
 
+If your application involves a series of steps that need to be orchestrated in a specific way, with decisions being made at each junction point, LangGraph provides the structure you need.
+
+The most production-ready agent framework on the market (a of by the beginning of 2025).
+
+At its core, `LangGraph` uses a directed graph structure to define the flow of your application:
+- **Nodes** represent individual processing steps (like calling LLM, using a tool, or making a decision).
+- **Edges** define the possible transitions between steps.
+- **State** is user defined and maintained and passed between nodes during execution. When deciding which node to target next, this is the current state that we look at.
+
+**State**
+
+State is the central concept in LangGraph. It represents all the info that flows through your application.
+The state is user-defined, hence the fields should carefully be crafted to contain all data needed for a decision-making process!
+
+```python
+from typing_extensions import TypedDict
+
+class State(TypedDict):
+    graph_state: str
+```
+
+
+**Nodes**
+
+**Edges**
+
+**StateGraph**
+
+
+
+
+
+
+
+
+
+
+
+
 ## USE CASE FOR AGENTIC RAG
 
 ## FINAL PROJECT
