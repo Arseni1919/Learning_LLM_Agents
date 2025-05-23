@@ -924,14 +924,99 @@ class State(TypedDict):
 
 **Nodes**
 
+Nodes are python functions. Each node:
+- takes the state as input
+- performs some operation
+- returns updates to the state
+
+```python
+def node_1(state):
+    print("---Node 1---")
+    return {"graph_state": state['graph_state'] +" I am"}
+
+def node_2(state):
+    print("---Node 2---")
+    return {"graph_state": state['graph_state'] +" happy!"}
+
+def node_3(state):
+    print("---Node 3---")
+    return {"graph_state": state['graph_state'] +" sad!"}
+```
+
+The nodes can contain:
+- LLM calls
+- Tool calls
+- Conditional logic
+- Human intervention
+
+Some nodes are required by design like START and END nodes.
+
 **Edges**
+
+Edges connect the nodes and define possible paths through your graph.
+
+```python
+import random
+from typing import Literal
+
+def decide_mood(state) -> Literal["node_2", "node_3"]:
+    
+    # Often, we will use state to decide on the next node to visit
+    user_input = state['graph_state'] 
+    
+    # Here, let's just do a 50 / 50 split between nodes 2, 3
+    if random.random() < 0.5:
+
+        # 50% of the time, we return Node 2
+        return "node_2"
+    
+    # 50% of the time, we return Node 3
+    return "node_3"
+```
+
+Edges can be:
+- **Direct**: always go from node A to node B
+- **Conditional**: choose the next node based on the current state
+
 
 **StateGraph**
 
+The `StateGraph` is the container that holds your entire agent workflow.
 
+```python
+from IPython.display import Image, display
+from langgraph.graph import StateGraph, START, END
 
+# Build graph
+builder = StateGraph(State)
+builder.add_node("node_1", node_1)
+builder.add_node("node_2", node_2)
+builder.add_node("node_3", node_3)
 
+# Logic
+builder.add_edge(START, "node_1")
+builder.add_conditional_edges("node_1", decide_mood)
+builder.add_edge("node_2", END)
+builder.add_edge("node_3", END)
 
+# Add
+graph = builder.compile()
+```
+
+To visualize:
+```python
+# View
+display(Image(graph.get_graph().draw_mermaid_png()))
+```
+
+And invoked:
+```python
+graph.invoke({"graph_state" : "Hi, this is Lance."})
+```
+
+Now let's build the following project:
+
+<img src="pics/first_graph.png" width="700">
 
 
 
@@ -955,3 +1040,4 @@ class State(TypedDict):
 ## Credits
 
 - [🤗Agents Course](https://huggingface.co/learn/agents-course/unit0/introduction)
+- [MLflow + LangChain](https://python.langchain.com/docs/integrations/providers/mlflow_tracking/)
