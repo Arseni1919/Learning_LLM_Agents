@@ -1033,6 +1033,8 @@ The file: [unit_2_langgraph_doc_analysis.py](unit_2_langgraph_doc_analysis.py)
 
 ## USE CASE FOR AGENTIC RAG
 
+This work is in the separate repo.
+
 ## FINAL PROJECT
 
 ## BONUS 1
