@@ -1009,7 +1009,7 @@ To visualize:
 display(Image(graph.get_graph().draw_mermaid_png()))
 ```
 
-And invoked:
+And to invoke:
 ```python
 graph.invoke({"graph_state" : "Hi, this is Lance."})
 ```
@@ -1021,6 +1021,8 @@ Now let's build the following project:
 The file: [unit_2_first_langgraph_proj.py](unit_2_langgraph_first_proj.py)
 
 ### Document Analysis Graph
+
+This is another project.
 
 - `AnyMessage` - class from Langchain that defines messages
 - `add_messages` - is an operator that adds
