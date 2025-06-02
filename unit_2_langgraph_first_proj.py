@@ -253,8 +253,7 @@ def main():
         # config={"callbacks": [langfuse_handler]}
     )
     print(spam_result)
-
-    compiled_graph.get_graph().draw_ascii()
+    print(compiled_graph.get_graph().draw_ascii())
 
 if __name__ == '__main__':
     main()

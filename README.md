@@ -1018,9 +1018,14 @@ Now let's build the following project:
 
 <img src="pics/first_graph.png" width="700">
 
+The file: [unit_2_first_langgraph_proj.py](unit_2_langgraph_first_proj.py)
 
+### Document Analysis Graph
 
+- `AnyMessage` - class from Langchain that defines messages
+- `add_messages` - is an operator that adds
 
+The file: [unit_2_langgraph_doc_analysis.py](unit_2_langgraph_doc_analysis.py)
 
 
 
@@ -1041,3 +1046,4 @@ Now let's build the following project:
 
 - [🤗Agents Course](https://huggingface.co/learn/agents-course/unit0/introduction)
 - [MLflow + LangChain](https://python.langchain.com/docs/integrations/providers/mlflow_tracking/)
+- [moondream model](https://github.com/vikhyat/moondream)
